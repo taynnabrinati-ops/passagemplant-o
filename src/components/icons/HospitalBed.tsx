@@ -1,0 +1,18 @@
+export function HospitalBed({ className, ...props }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="2" y="6" width="2.2" height="12" rx="0.4" />
+      <circle cx="7.5" cy="10.5" r="2" />
+      <path d="M10 11.5 h9 a1 1 0 0 1 1 1 V15 H10 Z" />
+      <rect x="4.2" y="15" width="17" height="2.2" rx="0.6" />
+      <rect x="20.6" y="12" width="1.6" height="5.2" rx="0.4" />
+    </svg>
+  );
+}
