@@ -200,7 +200,7 @@ function PassagemDoSetor() {
         </div>
 
         <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-          Setor
+          Bloco
           <select
             className="h-9 min-w-48 rounded-md border border-input bg-background px-3 text-sm text-foreground"
             value={setorAtivo ?? ""}
@@ -293,7 +293,7 @@ function PassagemDoSetor() {
                 {passagem.data?.pacientes.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                      Nenhum paciente internado neste setor.
+                      Nenhum paciente internado neste bloco.
                     </td>
                   </tr>
                 )}

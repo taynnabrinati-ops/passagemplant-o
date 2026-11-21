@@ -35,7 +35,7 @@ Variáveis (todas opcionais — os valores padrão já estão no Dockerfile):
 | Variável | Padrão | Para quê |
 | --- | --- | --- |
 | `VIVER_URL` | `https://macae-rj.vivver.com/login` | página de login do Vivver |
-| `VIVER_SETOR_PADRAO` | `Politrauma 3` | setor que abre selecionado |
+| `VIVER_SETOR_PADRAO` | `Politrauma 3` | bloco que abre selecionado (a lista de blocos vem do próprio Vivver) |
 | `ATUALIZAR_A_CADA_MIN` | `5` | atualização automática da passagem |
 | `SESSAO_INATIVIDADE_MIN` | `120` | encerra sessões paradas |
 | `PORT` | `8080` | porta do container |

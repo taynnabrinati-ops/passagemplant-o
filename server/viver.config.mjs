@@ -22,7 +22,10 @@ export default {
   },
 
   setores: {
-    /** Página que lista os setores/unidades (censo, mapa de leitos...). */
+    /**
+     * Página que lista os BLOCOS do Vivver (Politrauma 1, 2, 3...). A lista
+     * que aparece no site é lida daqui — com o login de quem está usando.
+     */
     url: "/censo",
     /** Cada setor na lista. O texto do elemento vira o nome do setor. */
     item: "select#setor option, .setor, [data-setor]",

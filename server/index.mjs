@@ -161,7 +161,7 @@ const servidor = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/viver/passagem") {
       const setor = url.searchParams.get("setor");
-      if (!setor) return responder(res, 400, { erro: "Faltou escolher o setor." });
+      if (!setor) return responder(res, 400, { erro: "Faltou escolher o bloco." });
       const forcar = url.searchParams.get("forcar") === "1";
       const { em, valor } = await comCache(s, `passagem:${setor}`, forcar, () => lerPacientesDoSetor(s, setor));
       return responder(res, 200, { setor, atualizadoEm: new Date(em).toISOString(), pacientes: valor });
