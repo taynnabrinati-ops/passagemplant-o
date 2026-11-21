@@ -13,6 +13,11 @@ import {
 } from "@/data/passagem";
 import { cn } from "@/lib/utils";
 
+/** "Politrauma  3" e "POLITRAUMA 3" viram a mesma coisa. */
+function normalizar(texto: string) {
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
 function Itens({ itens, vazio = "—" }: { itens: string[]; vazio?: string }) {
   if (itens.length === 0) return <span className="text-muted-foreground print:text-neutral-400">{vazio}</span>;
   return (
@@ -74,7 +79,11 @@ export function Passagem() {
   const setores = useSetores(origem);
 
   const setorId = params.get("setor") ?? undefined;
-  const setorAtivo = setorId ?? setores.data?.[0]?.id;
+  const padrao = normalizar(status.data?.setorPadrao ?? "");
+  const setorPadrao = padrao
+    ? setores.data?.find((s) => normalizar(s.nome).includes(padrao))?.id
+    : undefined;
+  const setorAtivo = setorId ?? setorPadrao ?? setores.data?.[0]?.id;
   const setorNome = setores.data?.find((s) => s.id === setorAtivo)?.nome ?? setorAtivo ?? "";
 
   const passagem = usePassagem(origem, setorAtivo, status.data?.minutos ?? 5);

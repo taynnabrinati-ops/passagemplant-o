@@ -67,7 +67,7 @@ export function useStatusViver() {
     queryKey: ["viver-status"],
     queryFn: async () => {
       try {
-        return await pegarJson<{ configurado: boolean; minutos: number }>("/api/viver/status");
+        return await pegarJson<{ configurado: boolean; minutos: number; setorPadrao?: string }>("/api/viver/status");
       } catch {
         return { configurado: false, minutos: 5 };
       }

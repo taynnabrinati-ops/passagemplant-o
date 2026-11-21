@@ -135,6 +135,18 @@ export async function lerPacientesDoSetor(setorId) {
     const url = urlCompleta(config.pacientes.url.replace("{setor}", encodeURIComponent(setorId)));
     await page.goto(url, { waitUntil: "networkidle" });
 
+    if (config.pacientes.escolherSetor) {
+      const caixa = page.locator(config.pacientes.escolherSetor).first();
+      const ehSelect = await caixa.evaluate((el) => el.tagName === "SELECT").catch(() => false);
+      if (ehSelect) {
+        await caixa.selectOption(setorId).catch(() => caixa.selectOption({ label: setorId }));
+      } else {
+        await caixa.click();
+        await page.getByText(setorId, { exact: false }).first().click();
+      }
+      await page.waitForLoadState("networkidle").catch(() => {});
+    }
+
     const linhas = page.locator(config.pacientes.linha);
     const total = await linhas.count();
     const pacientes = [];

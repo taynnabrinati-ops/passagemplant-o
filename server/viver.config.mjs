@@ -33,6 +33,11 @@ export default {
   pacientes: {
     /** Página com os pacientes de UM setor. {setor} é trocado pelo id do setor. */
     url: "/censo?setor={setor}",
+    /**
+     * Se o setor é escolhido NA PRÓPRIA tela (uma caixa de seleção), em vez de
+     * ir no endereço: o seletor dessa caixa. O robô escolhe o setor pelo nome.
+     */
+    escolherSetor: "",
     /** Cada linha/cartão de paciente. */
     linha: "table tbody tr",
     /**

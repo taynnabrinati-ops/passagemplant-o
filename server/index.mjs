@@ -48,6 +48,7 @@ const servidor = http.createServer(async (req, res) => {
       return responder(res, 200, {
         configurado: viverConfigurado(),
         minutos: Number(process.env.ATUALIZAR_A_CADA_MIN) || 5,
+        setorPadrao: process.env.VIVER_SETOR_PADRAO ?? "",
       });
     }
     if (!viverConfigurado()) {

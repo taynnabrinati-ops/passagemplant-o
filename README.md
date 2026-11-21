@@ -54,7 +54,9 @@ Depois é só abrir <http://localhost:5173/passagem>, escolher o setor e clicar 
 ### Ensinando o robô a ler as telas do Viver
 
 Onde fica cada informação no Viver está descrito num arquivo só,
-`server/viver.config.mjs`. Para descobrir isso sem expor dados de pacientes:
+`server/viver.config.mjs`. O endereço já vem apontando para o Vivver de Macaé
+(`https://macae-rj.vivver.com/login`) e o setor padrão é o Politrauma 3 — os dois
+se mudam no `.env`. Para descobrir isso sem expor dados de pacientes:
 
 ```bash
 npm run viver:explorar
