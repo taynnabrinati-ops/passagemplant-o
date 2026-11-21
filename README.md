@@ -46,6 +46,12 @@ npm run local            # site (5173) + servidor (5174)
 
 Sem `VIVER_URL`, a tela mostra pacientes fictícios.
 
+### Mapeando as telas do Vivver sem instalar nada
+
+Com o Vivver aberto e logado, em cada tela: **F12 → Console → colar o conteúdo
+de `server/explorar-navegador.js` → Enter**. Baixa `vivver-tela-N.html` com o
+esqueleto da página e todos os textos embaralhados.
+
 ### Ensinando o robô a ler as telas do Viver
 
 Onde fica cada informação no Viver está descrito num arquivo só,
