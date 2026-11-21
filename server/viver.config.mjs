@@ -60,6 +60,7 @@ export default {
       culturas: "",
       pendencias: "",
       observacoes: "",
+      evolucaoEnfermagem: "",
     },
     /**
      * Se os detalhes (dispositivos, antibióticos, pendências...) só aparecem
@@ -76,6 +77,14 @@ export default {
       culturas: "",
       pendencias: "",
       observacoes: "",
+      /**
+       * Evolução da enfermagem / dos técnicos (a mais recente). O site tira
+       * dela as intercorrências e os curativos. Se ela fica numa aba
+       * separada do prontuário, ponha em "abaEvolucaoEnfermagem" o botão/aba
+       * que precisa ser clicado antes.
+       */
+      abaEvolucaoEnfermagem: "",
+      evolucaoEnfermagem: "",
     },
   },
 };

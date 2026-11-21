@@ -18,10 +18,10 @@ function normalizar(texto: string) {
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-function Itens({ itens, vazio = "—" }: { itens: string[]; vazio?: string }) {
+function Itens({ itens, vazio = "—", className }: { itens: string[]; vazio?: string; className?: string }) {
   if (itens.length === 0) return <span className="text-muted-foreground print:text-neutral-400">{vazio}</span>;
   return (
-    <ul className="space-y-0.5">
+    <ul className={cn("space-y-0.5", className)}>
       {itens.map((item, i) => (
         <li key={i} className="leading-snug">
           {item}
@@ -58,7 +58,7 @@ function Linha({ p }: { p: PacientePassagem }) {
         {p.curativos.length > 0 && (
           <div className="mt-1.5 border-t border-dashed border-border pt-1 print:border-neutral-400">
             <div className="text-[0.8em] font-bold uppercase tracking-wide">Curativos</div>
-            <Itens itens={p.curativos} />
+            <Itens itens={p.curativos} className="font-bold" />
           </div>
         )}
       </td>
@@ -72,6 +72,12 @@ function Linha({ p }: { p: PacientePassagem }) {
       </td>
       <td className="px-2 py-2.5">
         <Itens itens={p.pendencias} />
+        {(p.intercorrencias?.length ?? 0) > 0 && (
+          <div className="mt-1.5 border-t border-dashed border-border pt-1 print:border-neutral-400">
+            <div className="text-[0.8em] font-bold uppercase tracking-wide">Intercorrências (enfermagem)</div>
+            <Itens itens={p.intercorrencias!} />
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -195,20 +201,20 @@ export function Passagem() {
             <table className="w-full min-w-[900px] border-collapse text-[15px] print:min-w-0 print:text-[12.5px]">
               <colgroup>
                 <col className="w-[5%]" />
-                <col className="w-[11%]" />
+                <col className="w-[10%]" />
+                <col className="w-[19%]" />
+                <col className="w-[20%]" />
+                <col className="w-[19%]" />
                 <col className="w-[27%]" />
-                <col className="w-[19%]" />
-                <col className="w-[19%]" />
-                <col className="w-[19%]" />
               </colgroup>
               <thead>
                 <tr className="border-b-2 border-border bg-secondary text-left text-[0.8em] uppercase tracking-wide text-muted-foreground print:border-black print:bg-neutral-200 print:text-black">
                   <th className="px-2 py-1.5 text-center">Leito</th>
                   <th className="px-2 py-1.5">Paciente</th>
-                  <th className="px-2 py-1.5">Diagnóstico / Resumo</th>
+                  <th className="px-2 py-1.5">Diagnóstico</th>
                   <th className="px-2 py-1.5">Dispositivos / Curativos</th>
                   <th className="px-2 py-1.5">ATB / Culturas</th>
-                  <th className="px-2 py-1.5">Pendências</th>
+                  <th className="px-2 py-1.5">Pendências / Intercorrências</th>
                 </tr>
               </thead>
               <tbody>

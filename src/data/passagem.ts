@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { daysSince, ageFromBirthDate, isOncePerDay, therapyDayLabel, parseDate } from "@/lib/days";
+import { extrairDaEvolucao } from "@/lib/evolucao";
 import * as demo from "./demo";
 
 /** Um paciente como ele aparece na passagem de plantão. */
@@ -18,6 +19,10 @@ export interface PacientePassagem {
   culturas: string[];
   pendencias: string[];
   observacoes: string;
+  /** Texto da evolução de enfermagem/técnicos, como veio do Viver. */
+  evolucaoEnfermagem?: string;
+  /** Preenchido pelo site a partir da evolução de enfermagem. */
+  intercorrencias?: string[];
 }
 
 export interface Setor {
@@ -95,10 +100,13 @@ export function usePassagem(origem: Origem | undefined, setor: string | undefine
     queryKey: ["passagem", origem, setor],
     enabled: !!origem && !!setor,
     queryFn: async (): Promise<PassagemSetor> => {
-      if (origem !== "viver") return passagemDemonstracao(setor!);
       const extra = forcar.current ? "&forcar=1" : "";
       forcar.current = false;
-      return pegarJson<PassagemSetor>(`/api/viver/passagem?setor=${encodeURIComponent(setor!)}${extra}`);
+      const bruta =
+        origem === "viver"
+          ? await pegarJson<PassagemSetor>(`/api/viver/passagem?setor=${encodeURIComponent(setor!)}${extra}`)
+          : passagemDemonstracao(setor!);
+      return { ...bruta, pacientes: bruta.pacientes.map(completarComEvolucao) };
     },
     // Atualiza sozinha — ninguém precisa clicar em nada.
     refetchInterval: minutos * 60_000,
@@ -112,6 +120,34 @@ export function usePassagem(origem: Origem | undefined, setor: string | undefine
   }, [refetch]);
   return { ...query, atualizarAgora };
 }
+
+/**
+ * Junta o que a evolução de enfermagem traz: intercorrências viram uma lista
+ * própria; curativos descritos nela entram na coluna de dispositivos quando o
+ * Viver não tiver um campo próprio para eles.
+ */
+function completarComEvolucao(p: PacientePassagem): PacientePassagem {
+  const { intercorrencias, curativos } = extrairDaEvolucao(p.evolucaoEnfermagem ?? "");
+  return {
+    ...p,
+    intercorrencias,
+    curativos: p.curativos.length > 0 ? p.curativos : curativos,
+  };
+}
+
+/** Evoluções de enfermagem fictícias para o modo demonstração. */
+const EVOLUCAO_DEMO: Record<string, string> = {
+  "p-01":
+    "Paciente sedado, RASS -3, em VM. Apresentou pico febril de 38,7 °C às 02h, comunicado plantonista e coletadas hemoculturas. Dieta enteral em BIC a 50 mL/h. Diurese por SVD, 1.200 mL em 12h.",
+  "p-02":
+    "Em VM, prona realizada às 22h sem intercorrências. Episódio de dessaturação até 84% durante aspiração, revertido com aumento da FiO2. Curativo do CVC subclávia D realizado com gaze, sem sinais flogísticos.",
+  "p-05":
+    "Paciente em cuidados de conforto, família presente. Recusou dieta via oral. Mudança de decúbito 2/2h mantida.",
+  "p-06":
+    "Agitação psicomotora às 04h, necessário contenção mecânica no MSD conforme prescrição. PIC entre 12 e 18 mmHg.",
+  "p-09":
+    "Glicemia capilar de 52 mg/dL às 05h, corrigida com glicose 50% conforme protocolo. Acesso periférico MSE perdido, puncionado novo acesso em MSD. Evacuou, fezes pastosas.",
+};
 
 /** Curativos fictícios para o modo demonstração. */
 const CURATIVOS_DEMO: Record<string, string[]> = {
@@ -157,6 +193,7 @@ function passagemDemonstracao(unitId: string): PassagemSetor {
         observacoes: [p.palliative_care ? "Cuidados paliativos" : "", p.terminality ? "Terminalidade" : ""]
           .filter(Boolean)
           .join(" · "),
+        evolucaoEnfermagem: EVOLUCAO_DEMO[id] ?? "",
       };
     });
   return { setor: unitId, atualizadoEm: new Date().toISOString(), pacientes };

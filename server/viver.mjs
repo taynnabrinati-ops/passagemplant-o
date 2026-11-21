@@ -170,6 +170,7 @@ export async function lerPacientesDoSetor(setorId) {
         culturas: lista(await textoDe(linha, campos.culturas)),
         pendencias: lista(await textoDe(linha, campos.pendencias)),
         observacoes: await textoDe(linha, campos.observacoes),
+        evolucaoEnfermagem: await textoDe(linha, campos.evolucaoEnfermagem),
       };
 
       const href = abrirProntuario
@@ -185,6 +186,15 @@ export async function lerPacientesDoSetor(setorId) {
           p.observacoes ||= await textoDe(corpo, detalhe.observacoes);
           for (const chave of ["dispositivos", "curativos", "antibioticos", "culturas", "pendencias"]) {
             if (p[chave].length === 0) p[chave] = lista(await textoDe(corpo, detalhe[chave]));
+          }
+          if (!p.evolucaoEnfermagem && detalhe.evolucaoEnfermagem) {
+            if (detalhe.abaEvolucaoEnfermagem) {
+              await ficha.locator(detalhe.abaEvolucaoEnfermagem).first().click().catch(() => {});
+              await ficha.waitForLoadState("networkidle").catch(() => {});
+            }
+            // Só a evolução mais recente (o primeiro bloco encontrado).
+            const bloco = ficha.locator(detalhe.evolucaoEnfermagem).first();
+            p.evolucaoEnfermagem = ((await bloco.innerText({ timeout: 3000 }).catch(() => "")) ?? "").trim();
           }
         } finally {
           await ficha.close().catch(() => {});
