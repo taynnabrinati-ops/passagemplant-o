@@ -89,3 +89,32 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* Impressão da passagem de plantão: A4 deitado, sempre em preto no branco. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .folha-passagem,
+  .folha-passagem * {
+    color: #000;
+    background-color: transparent;
+  }
+  .folha-passagem thead tr {
+    background-color: #e5e5e5 !important;
+  }
+  .folha-passagem thead {
+    display: table-header-group; /* repete o cabeçalho da tabela em cada folha */
+  }
+  .folha-passagem tr {
+    break-inside: avoid;
+  }
+}

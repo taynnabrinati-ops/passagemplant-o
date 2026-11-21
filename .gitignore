@@ -7,3 +7,8 @@ dist-ssr
 !.env.example
 .DS_Store
 *.tsbuildinfo
+
+# sessão do Viver salva localmente (contém cookies de login)
+server/.sessao-viver.json
+# capturas do modo explorar
+server/exploracao/

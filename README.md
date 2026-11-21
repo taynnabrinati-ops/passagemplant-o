@@ -20,8 +20,53 @@ conjunto de dados de demonstração.
   acrescenta as tarjas de visita do dia e de pareceres pendentes.
 - **Tema claro e escuro**, com os mesmos tokens de cor da referência.
 
-As seções Round, Passagem de plantão, Arquivo e Admin existem na navegação mas
-não foram implementadas — a tela reproduzida é o quadro de leitos.
+- **`/passagem?setor=<id>`** — a passagem de plantão. Escolhe-se o setor, os
+  pacientes vêm direto do Viver (com as iniciais no lugar do nome) e a folha sai
+  pronta para imprimir em A4 deitado. Atualiza sozinha a cada 5 minutos.
+
+As seções Round, Arquivo e Admin existem na navegação mas não foram
+implementadas.
+
+## Passagem de plantão puxando do Viver
+
+Tudo roda **no seu computador**: um pequeno servidor local abre o Viver num
+navegador escondido, entra com o seu login e lê os pacientes do setor. Nenhum
+dado de paciente sai da sua máquina, e o arquivo com a senha nunca vai para o
+GitHub.
+
+**Uma vez só, para instalar** (precisa do [Node.js 22](https://nodejs.org)):
+
+```bash
+npm install
+npm run viver:instalar-navegador
+cp .env.example .env     # depois abra o .env e preencha endereço, usuário e senha do Viver
+```
+
+**No dia a dia:**
+
+```bash
+npm run local            # abre o site e o robô do Viver juntos
+```
+
+Depois é só abrir <http://localhost:5173/passagem>, escolher o setor e clicar em
+**Imprimir**. Sem o `.env` preenchido, a tela mostra pacientes fictícios.
+
+### Ensinando o robô a ler as telas do Viver
+
+Onde fica cada informação no Viver está descrito num arquivo só,
+`server/viver.config.mjs`. Para descobrir isso sem expor dados de pacientes:
+
+```bash
+npm run viver:explorar
+```
+
+O Viver abre na tela; navegue até a lista de setores, a lista de pacientes e um
+prontuário, apertando ENTER no terminal em cada uma. A estrutura de cada página
+é salva em `server/exploracao/` com **todos os textos embaralhados** (letras
+viram `x`, números viram `0`) — confira e compartilhe esses arquivos para
+ajustar o `viver.config.mjs`.
+
+Para ver o robô trabalhando, coloque `VIVER_MOSTRAR_NAVEGADOR=1` no `.env`.
 
 ## Rodando
 

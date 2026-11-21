@@ -74,8 +74,8 @@ export function AppShell() {
   const showUnitTabs = location.pathname.startsWith("/dashboard");
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
+    <div className="min-h-screen bg-background print:bg-white">
+      <header className="sticky top-0 z-30 print:hidden border-b border-border/70 bg-background/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-primary">
             <HospitalBed className="h-8 w-8 rounded-md p-1" />
@@ -148,7 +148,7 @@ export function AppShell() {
 
       {showUnitTabs && <UnitTabs />}
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">
         <Outlet />
       </main>
     </div>
