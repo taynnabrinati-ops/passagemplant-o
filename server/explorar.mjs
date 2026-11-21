@@ -12,11 +12,11 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
-import { fecharNavegador, paginaLogada, viverConfigurado } from "./viver.mjs";
+import { entrar, fecharNavegador, paginaInicial, sessao, viverConfigurado } from "./viver.mjs";
 
 const PASTA = path.join(path.dirname(fileURLToPath(import.meta.url)), "exploracao");
 
-if (!viverConfigurado()) {
+if (!viverConfigurado() || !process.env.VIVER_USUARIO || !process.env.VIVER_SENHA) {
   console.error("Preencha VIVER_URL, VIVER_USUARIO e VIVER_SENHA no arquivo .env primeiro.");
   process.exit(1);
 }
@@ -24,7 +24,7 @@ if (!viverConfigurado()) {
 process.env.VIVER_MOSTRAR_NAVEGADOR = "1";
 mkdirSync(PASTA, { recursive: true });
 
-const page = await paginaLogada();
+const page = await paginaInicial(sessao(await entrar(process.env.VIVER_USUARIO, process.env.VIVER_SENHA)));
 const terminal = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 console.log(`

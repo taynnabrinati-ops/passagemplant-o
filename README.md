@@ -27,29 +27,24 @@ conjunto de dados de demonstração.
 As seções Round, Arquivo e Admin existem na navegação mas não foram
 implementadas.
 
-## Passagem de plantão puxando do Viver
+## Passagem de plantão puxando do Vivver
 
-Tudo roda **no seu computador**: um pequeno servidor local abre o Viver num
-navegador escondido, entra com o seu login e lê os pacientes do setor. Nenhum
-dado de paciente sai da sua máquina, e o arquivo com a senha nunca vai para o
-GitHub.
+O site é hospedado num servidor (guia para a TI em [HOSPEDAGEM.md](HOSPEDAGEM.md))
+e cada pessoa usa pelo link, entrando com **o próprio usuário e senha do
+Vivver** — nada é instalado nos computadores do hospital. O servidor abre uma
+sessão de navegador para cada pessoa e lê os pacientes do setor com o acesso
+dela. Senhas não são guardadas e não há banco de dados de pacientes.
 
-**Uma vez só, para instalar** (precisa do [Node.js 22](https://nodejs.org)):
+Para desenvolver:
 
 ```bash
 npm install
 npm run viver:instalar-navegador
-cp .env.example .env     # depois abra o .env e preencha endereço, usuário e senha do Viver
+cp .env.example .env
+npm run local            # site (5173) + servidor (5174)
 ```
 
-**No dia a dia:**
-
-```bash
-npm run local            # abre o site e o robô do Viver juntos
-```
-
-Depois é só abrir <http://localhost:5173/passagem>, escolher o setor e clicar em
-**Imprimir**. Sem o `.env` preenchido, a tela mostra pacientes fictícios.
+Sem `VIVER_URL`, a tela mostra pacientes fictícios.
 
 ### Ensinando o robô a ler as telas do Viver
 

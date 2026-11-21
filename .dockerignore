@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+.env.*
+server/exploracao
+server/.sessao-viver.json
+.git

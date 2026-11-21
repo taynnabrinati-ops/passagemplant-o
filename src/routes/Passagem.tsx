@@ -1,12 +1,16 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { AlertTriangle, Printer, RefreshCw } from "lucide-react";
+import { AlertTriangle, LogIn, LogOut, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   diaDeInternacao,
   iniciais,
+  PrecisaEntrar,
+  useEntrar,
   usePassagem,
+  useSair,
   useSetores,
   useStatusViver,
   type PacientePassagem,
@@ -83,7 +87,64 @@ function Linha({ p }: { p: PacientePassagem }) {
   );
 }
 
+function Entrar() {
+  const entrar = useEntrar();
+  const [usuario, setUsuario] = useState("");
+  const [senha, setSenha] = useState("");
+  const enviar = (e: FormEvent) => {
+    e.preventDefault();
+    entrar.mutate({ usuario, senha }, { onSettled: () => setSenha("") });
+  };
+  return (
+    <div className="mx-auto max-w-sm space-y-4 py-10">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Passagem de plantão</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Entre com o <strong>seu</strong> usuário e senha do Vivver. A passagem é montada com o seu
+          acesso, e a senha não fica guardada.
+        </p>
+      </div>
+      <form onSubmit={enviar} className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <label className="block text-sm font-medium">
+          Usuário do Vivver
+          <input
+            className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-base"
+            autoComplete="username"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block text-sm font-medium">
+          Senha
+          <input
+            type="password"
+            className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-base"
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
+        </label>
+        {entrar.error && <p className="text-sm text-destructive">{entrar.error.message}</p>}
+        <Button type="submit" className="w-full" disabled={entrar.isPending}>
+          <LogIn />
+          {entrar.isPending ? "Entrando no Vivver…" : "Entrar"}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 export function Passagem() {
+  const status = useStatusViver();
+  if (status.data?.configurado && !status.data.logado) return <Entrar />;
+  return <PassagemDoSetor />;
+}
+
+function PassagemDoSetor() {
+  const client = useQueryClient();
+  const sair = useSair();
   const [params, setParams] = useSearchParams();
   const status = useStatusViver();
   const origem = status.data ? (status.data.configurado ? "viver" : "demonstracao") : undefined;
@@ -98,6 +159,11 @@ export function Passagem() {
   const setorNome = setores.data?.find((s) => s.id === setorAtivo)?.nome ?? setorAtivo ?? "";
 
   const passagem = usePassagem(origem, setorAtivo, status.data?.minutos ?? 5);
+  const erro = setores.error ?? passagem.error;
+  useEffect(() => {
+    // Sessão caiu no meio do plantão: volta para a tela de entrar.
+    if (erro instanceof PrecisaEntrar) void client.invalidateQueries({ queryKey: ["viver-status"] });
+  }, [erro, client]);
 
   useEffect(() => {
     document.title = setorNome ? `Passagem de plantão — ${setorNome}` : "Passagem de plantão";
@@ -127,7 +193,7 @@ export function Passagem() {
         <div className="mr-auto">
           <h1 className="text-2xl font-semibold tracking-tight">Passagem de plantão</h1>
           <p className="text-sm text-muted-foreground">
-            {origem === "viver" && "Puxando direto do Viver, atualiza sozinha."}
+            {origem === "viver" && `Puxando direto do Vivver (${status.data?.usuario}), atualiza sozinha.`}
             {origem === "demonstracao" && "Modo demonstração — pacientes fictícios."}
             {atualizado && ` Última leitura: ${atualizado}.`}
           </p>
@@ -157,14 +223,19 @@ export function Passagem() {
           <Printer />
           Imprimir
         </Button>
+        {status.data?.logado && (
+          <Button variant="ghost" onClick={() => sair.mutate()} title={`Conectado como ${status.data.usuario}`}>
+            <LogOut />
+            Sair
+          </Button>
+        )}
       </div>
 
       {origem === "demonstracao" && (
         <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm print:hidden">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <span>
-            O Viver ainda não está ligado. Para puxar os pacientes de verdade, preencha o arquivo{" "}
-            <code>.env</code> e abra o site com <code>npm run local</code> (passo a passo no README).
+            O Vivver ainda não está ligado a este site — os pacientes abaixo são fictícios.
           </span>
         </div>
       )}

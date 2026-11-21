@@ -1,18 +1,16 @@
 /**
- * O robô que entra no Viver com o login do próprio plantonista e lê os
- * pacientes de um setor. Roda só no computador de quem usa — nenhum dado de
- * paciente sai dessa máquina.
+ * O robô que entra no Vivver e lê os pacientes de um setor.
+ *
+ * Cada pessoa entra com o PRÓPRIO usuário e senha do Vivver: o robô abre um
+ * navegador separado para ela (um "contexto"), e é com esse login que lê os
+ * prontuários. A senha é usada só no momento do login e não é guardada; os
+ * dados dos pacientes ficam só na memória, enquanto a página está aberta.
  */
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
+import { randomBytes } from "node:crypto";
 import config from "./viver.config.mjs";
 
-const AQUI = path.dirname(fileURLToPath(import.meta.url));
-const ARQUIVO_SESSAO = path.join(AQUI, ".sessao-viver.json");
-
 export function viverConfigurado() {
-  return Boolean(process.env.VIVER_URL && process.env.VIVER_USUARIO && process.env.VIVER_SENHA);
+  return Boolean(process.env.VIVER_URL);
 }
 
 function urlCompleta(caminho) {
@@ -21,50 +19,48 @@ function urlCompleta(caminho) {
   return new URL(caminho, base.endsWith("/") ? base : `${base}/`).toString();
 }
 
-let navegador = null;
-let contexto = null;
+export class SessaoExpirada extends Error {
+  constructor() {
+    super("Sua sessão no Vivver expirou. Entre de novo.");
+  }
+}
 
-async function abrirContexto() {
-  if (contexto) return contexto;
+/** Sessão some depois de tanto tempo sem uso. */
+const INATIVIDADE_MS = Number(process.env.SESSAO_INATIVIDADE_MIN ?? 120) * 60_000;
+const sessoes = new Map();
+let navegador = null;
+
+async function abrirNavegador() {
+  if (navegador?.isConnected()) return navegador;
   let chromium;
   try {
     ({ chromium } = await import("playwright"));
   } catch {
-    throw new Error(
-      'O Playwright não está instalado. Rode "npm install" e depois "npx playwright install chromium".',
-    );
+    throw new Error('O Playwright não está instalado. Rode "npm install" e "npm run viver:instalar-navegador".');
   }
   navegador = await chromium.launch({
     headless: process.env.VIVER_MOSTRAR_NAVEGADOR !== "1",
     // Opcional: usar um Chrome/Chromium já instalado em vez do baixado pelo Playwright.
     executablePath: process.env.VIVER_CHROMIUM || undefined,
   });
-  contexto = await navegador.newContext({
-    storageState: existsSync(ARQUIVO_SESSAO) ? ARQUIVO_SESSAO : undefined,
-    locale: "pt-BR",
-    timezoneId: "America/Sao_Paulo",
-  });
-  return contexto;
+  return navegador;
 }
 
 export async function fecharNavegador() {
+  for (const token of sessoes.keys()) await sair(token);
   await navegador?.close().catch(() => {});
   navegador = null;
-  contexto = null;
 }
 
-/** Garante uma página logada. Reaproveita a sessão salva quando ela ainda vale. */
-export async function paginaLogada() {
-  const ctx = await abrirContexto();
-  const page = await ctx.newPage();
-  await page.goto(urlCompleta(config.login.url), { waitUntil: "domcontentloaded" });
-
-  const campoSenha = page.locator(config.login.senha).first();
-  const precisaLogar = await campoSenha.isVisible({ timeout: 4000 }).catch(() => false);
-
-  if (precisaLogar) {
-    await page.locator(config.login.usuario).first().fill(process.env.VIVER_USUARIO);
-    await campoSenha.fill(process.env.VIVER_SENHA);
+/** Faz login no Vivver com o usuário e a senha da pessoa. Devolve o token da sessão. */
+export async function entrar(usuario, senha) {
+  const nav = await abrirNavegador();
+  const contexto = await nav.newContext({ locale: "pt-BR", timezoneId: "America/Sao_Paulo" });
+  const page = await contexto.newPage();
+  try {
+    await page.goto(urlCompleta(config.login.url), { waitUntil: "domcontentloaded" });
+    await page.locator(config.login.usuario).first().fill(usuario);
+    await page.locator(config.login.senha).first().fill(senha);
     await Promise.all([
       page.waitForLoadState("networkidle").catch(() => {}),
       page.locator(config.login.entrar).first().click(),
@@ -74,13 +70,51 @@ export async function paginaLogada() {
       .first()
       .isVisible({ timeout: 3000 })
       .catch(() => false);
-    if (aindaNoLogin) {
-      await page.close();
-      throw new Error("Não consegui entrar no Viver. Confira usuário e senha no arquivo .env.");
-    }
-    await ctx.storageState({ path: ARQUIVO_SESSAO });
+    if (aindaNoLogin) throw new Error("Usuário ou senha do Vivver não conferem.");
+  } catch (erro) {
+    await contexto.close().catch(() => {});
+    throw erro;
+  } finally {
+    await page.close().catch(() => {});
+  }
+  const token = randomBytes(32).toString("base64url");
+  sessoes.set(token, { contexto, usuario, ultimoUso: Date.now() });
+  return token;
+}
+
+export async function sair(token) {
+  const sessao = sessoes.get(token);
+  sessoes.delete(token);
+  await sessao?.contexto.close().catch(() => {});
+}
+
+/** A sessão desse token, ou null. Renova o prazo de inatividade. */
+export function sessao(token) {
+  const s = token ? sessoes.get(token) : undefined;
+  if (!s) return null;
+  s.ultimoUso = Date.now();
+  return s;
+}
+
+setInterval(() => {
+  for (const [token, s] of sessoes) if (Date.now() - s.ultimoUso > INATIVIDADE_MS) void sair(token);
+}, 60_000).unref();
+
+/** Abre uma página já logada; se o Vivver tiver derrubado a sessão, avisa. */
+async function paginaLogada(s, url) {
+  const page = await s.contexto.newPage();
+  await page.goto(url, { waitUntil: "networkidle" });
+  const voltouProLogin = await page.locator(config.login.senha).first().isVisible({ timeout: 1500 }).catch(() => false);
+  if (voltouProLogin) {
+    await page.close();
+    throw new SessaoExpirada();
   }
   return page;
+}
+
+/** Para o modo explorar: uma página logada qualquer. */
+export async function paginaInicial(s) {
+  return paginaLogada(s, urlCompleta(config.login.url));
 }
 
 async function textoDe(raiz, onde) {
@@ -105,10 +139,9 @@ function lista(texto) {
     .filter(Boolean);
 }
 
-export async function listarSetores() {
-  const page = await paginaLogada();
+export async function listarSetores(s) {
+  const page = await paginaLogada(s, urlCompleta(config.setores.url));
   try {
-    await page.goto(urlCompleta(config.setores.url), { waitUntil: "networkidle" });
     const itens = page.locator(config.setores.item);
     const total = await itens.count();
     const setores = [];
@@ -128,12 +161,11 @@ export async function listarSetores() {
   }
 }
 
-export async function lerPacientesDoSetor(setorId) {
-  const page = await paginaLogada();
+export async function lerPacientesDoSetor(s, setorId) {
+  const url = urlCompleta(config.pacientes.url.replace("{setor}", encodeURIComponent(setorId)));
+  const page = await paginaLogada(s, url);
   const { campos, detalhe, abrirProntuario } = config.pacientes;
   try {
-    const url = urlCompleta(config.pacientes.url.replace("{setor}", encodeURIComponent(setorId)));
-    await page.goto(url, { waitUntil: "networkidle" });
 
     if (config.pacientes.escolherSetor) {
       const caixa = page.locator(config.pacientes.escolherSetor).first();

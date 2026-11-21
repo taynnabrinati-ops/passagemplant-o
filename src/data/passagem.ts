@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { daysSince, ageFromBirthDate, isOncePerDay, therapyDayLabel, parseDate } from "@/lib/days";
 import { extrairDaEvolucao } from "@/lib/evolucao";
 import * as demo from "./demo";
@@ -60,22 +60,34 @@ export function diaDeInternacao(data: string): number | null {
   return Number.isFinite(dias) && dias > 0 ? dias : null;
 }
 
-async function pegarJson<T>(url: string): Promise<T> {
-  const resposta = await fetch(url);
+/** O servidor respondeu que a pessoa precisa (re)entrar no Vivver. */
+export class PrecisaEntrar extends Error {}
+
+async function pegarJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const resposta = await fetch(url, { credentials: "same-origin", ...init });
   const corpo = await resposta.json().catch(() => ({}));
+  if (resposta.status === 401) throw new PrecisaEntrar(corpo.erro ?? "Entre com seu usuário do Vivver.");
   if (!resposta.ok) throw new Error(corpo.erro ?? `Erro ${resposta.status}`);
   return corpo as T;
 }
 
-/** O servidor local está rodando e com o Viver configurado? */
+export interface StatusViver {
+  configurado: boolean;
+  logado: boolean;
+  usuario: string | null;
+  minutos: number;
+  setorPadrao?: string;
+}
+
+/** O servidor está no ar, com o Vivver configurado, e a pessoa já entrou? */
 export function useStatusViver() {
   return useQuery({
     queryKey: ["viver-status"],
-    queryFn: async () => {
+    queryFn: async (): Promise<StatusViver> => {
       try {
-        return await pegarJson<{ configurado: boolean; minutos: number; setorPadrao?: string }>("/api/viver/status");
+        return await pegarJson<StatusViver>("/api/viver/status");
       } catch {
-        return { configurado: false, minutos: 5 };
+        return { configurado: false, logado: false, usuario: null, minutos: 5 };
       }
     },
     staleTime: 60_000,
@@ -157,6 +169,27 @@ const CURATIVOS_DEMO: Record<string, string[]> = {
   "p-06": ["FO craniectomia — curativo oclusivo, avaliar exsudato"],
   "p-07": ["Traqueostomia — gaze + troca do cadarço 12/12 h"],
 };
+
+export function useEntrar() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (dados: { usuario: string; senha: string }) =>
+      pegarJson("/api/entrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados),
+      }),
+    onSuccess: () => client.invalidateQueries(),
+  });
+}
+
+export function useSair() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => pegarJson("/api/sair", { method: "POST" }),
+    onSettled: () => client.resetQueries(),
+  });
+}
 
 /** Mesmo formato do Viver, montado a partir dos pacientes fictícios. */
 function passagemDemonstracao(unitId: string): PassagemSetor {

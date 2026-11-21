@@ -11,7 +11,8 @@
     "servidor": "node --env-file-if-exists=.env server/index.mjs",
     "local": "concurrently -k -n site,viver -c cyan,magenta \"vite\" \"npm:servidor\"",
     "viver:explorar": "node --env-file-if-exists=.env server/explorar.mjs",
-    "viver:instalar-navegador": "playwright install chromium"
+    "viver:instalar-navegador": "playwright install chromium",
+    "start": "node --env-file-if-exists=.env server/index.mjs"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.1.8",
