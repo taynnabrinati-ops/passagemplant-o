@@ -165,6 +165,7 @@ export async function lerPacientesDoSetor(setorId) {
         comorbidades: await textoDe(linha, campos.comorbidades),
         alergias: await textoDe(linha, campos.alergias),
         dispositivos: lista(await textoDe(linha, campos.dispositivos)),
+        curativos: lista(await textoDe(linha, campos.curativos)),
         antibioticos: lista(await textoDe(linha, campos.antibioticos)),
         culturas: lista(await textoDe(linha, campos.culturas)),
         pendencias: lista(await textoDe(linha, campos.pendencias)),
@@ -182,7 +183,7 @@ export async function lerPacientesDoSetor(setorId) {
           p.comorbidades ||= await textoDe(corpo, detalhe.comorbidades);
           p.alergias ||= await textoDe(corpo, detalhe.alergias);
           p.observacoes ||= await textoDe(corpo, detalhe.observacoes);
-          for (const chave of ["dispositivos", "antibioticos", "culturas", "pendencias"]) {
+          for (const chave of ["dispositivos", "curativos", "antibioticos", "culturas", "pendencias"]) {
             if (p[chave].length === 0) p[chave] = lista(await textoDe(corpo, detalhe[chave]));
           }
         } finally {

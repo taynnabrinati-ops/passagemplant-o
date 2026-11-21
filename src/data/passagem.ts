@@ -13,6 +13,7 @@ export interface PacientePassagem {
   comorbidades: string;
   alergias: string;
   dispositivos: string[];
+  curativos: string[];
   antibioticos: string[];
   culturas: string[];
   pendencias: string[];
@@ -112,6 +113,15 @@ export function usePassagem(origem: Origem | undefined, setor: string | undefine
   return { ...query, atualizarAgora };
 }
 
+/** Curativos fictícios para o modo demonstração. */
+const CURATIVOS_DEMO: Record<string, string[]> = {
+  "p-01": ["LPP sacral estágio 3 — hidrocoloide, troca a cada 72 h (D2)"],
+  "p-03": ["FO esternotomia — limpa e seca, gaze estéril 1x/dia"],
+  "p-05": ["LPP calcâneo D — AGE + gaze, troca diária"],
+  "p-06": ["FO craniectomia — curativo oclusivo, avaliar exsudato"],
+  "p-07": ["Traqueostomia — gaze + troca do cadarço 12/12 h"],
+};
+
 /** Mesmo formato do Viver, montado a partir dos pacientes fictícios. */
 function passagemDemonstracao(unitId: string): PassagemSetor {
   const br = (iso: string) => parseDate(iso).toLocaleDateString("pt-BR");
@@ -132,6 +142,7 @@ function passagemDemonstracao(unitId: string): PassagemSetor {
         dispositivos: demo.invasions
           .filter((i) => i.patient_id === id && !i.removed_at)
           .map((i) => `${i.kind}${i.site ? ` ${i.site}` : ""} D${daysSince(i.start_date)}`),
+        curativos: CURATIVOS_DEMO[id] ?? [],
         antibioticos: demo.medications
           .filter((m) => m.patient_id === id && !m.end_date && m.kind === "Antibiótico")
           .map((m) => `${m.drug} ${therapyDayLabel(m.kind, m.start_date, undefined, isOncePerDay(m.note))}`),

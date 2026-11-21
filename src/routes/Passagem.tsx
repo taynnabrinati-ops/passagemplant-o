@@ -33,29 +33,36 @@ function Itens({ itens, vazio = "—" }: { itens: string[]; vazio?: string }) {
 
 function Linha({ p }: { p: PacientePassagem }) {
   const dih = diaDeInternacao(p.dataInternacao);
+  const subtitulo = "text-[0.85em] text-muted-foreground print:text-neutral-700";
   return (
     <tr className="break-inside-avoid border-b border-border align-top print:border-neutral-400">
-      <td className="px-2 py-2 text-center text-base font-semibold tabular-nums">{p.leito || "—"}</td>
-      <td className="px-2 py-2">
-        <div className="text-base font-semibold tracking-wide">{iniciais(p.nome)}</div>
-        <div className="text-xs text-muted-foreground print:text-neutral-600">
+      <td className="px-2 py-2.5 text-center text-[1.2em] font-bold tabular-nums">{p.leito || "—"}</td>
+      <td className="px-2 py-2.5">
+        <div className="text-[1.2em] font-bold tracking-wide">{iniciais(p.nome)}</div>
+        <div className={subtitulo}>
           {p.idade && `${p.idade.replace(/\D+$/, "")} anos`}
           {dih !== null && ` · D${dih} int.`}
         </div>
-        {p.dataInternacao && (
-          <div className="text-[11px] text-muted-foreground print:text-neutral-600">DI {p.dataInternacao}</div>
+        {p.dataInternacao && <div className={subtitulo}>DI {p.dataInternacao}</div>}
+      </td>
+      <td className="px-2 py-2.5">
+        <div className="font-semibold leading-snug">{p.diagnostico || "—"}</div>
+        {p.comorbidades && <div className="mt-1">Comorb.: {p.comorbidades}</div>}
+        {p.alergias && (
+          <div className="mt-1 font-bold text-destructive print:text-black">Alergia: {p.alergias}</div>
+        )}
+        {p.observacoes && <div className="mt-1 leading-snug">{p.observacoes}</div>}
+      </td>
+      <td className="px-2 py-2.5">
+        <Itens itens={p.dispositivos} />
+        {p.curativos.length > 0 && (
+          <div className="mt-1.5 border-t border-dashed border-border pt-1 print:border-neutral-400">
+            <div className="text-[0.8em] font-bold uppercase tracking-wide">Curativos</div>
+            <Itens itens={p.curativos} />
+          </div>
         )}
       </td>
-      <td className="px-2 py-2">
-        <div className="font-medium leading-snug">{p.diagnostico || "—"}</div>
-        {p.comorbidades && <div className="mt-1 text-xs">Comorb.: {p.comorbidades}</div>}
-        {p.alergias && <div className="mt-1 text-xs font-semibold text-destructive print:text-black">Alergia: {p.alergias}</div>}
-        {p.observacoes && <div className="mt-1 text-xs italic">{p.observacoes}</div>}
-      </td>
-      <td className="px-2 py-2 text-xs">
-        <Itens itens={p.dispositivos} />
-      </td>
-      <td className="px-2 py-2 text-xs">
+      <td className="px-2 py-2.5">
         <Itens itens={p.antibioticos} vazio="Sem ATB" />
         {p.culturas.length > 0 && (
           <div className="mt-1.5 border-t border-dashed border-border pt-1 print:border-neutral-400">
@@ -63,11 +70,9 @@ function Linha({ p }: { p: PacientePassagem }) {
           </div>
         )}
       </td>
-      <td className="px-2 py-2 text-xs">
+      <td className="px-2 py-2.5">
         <Itens itens={p.pendencias} />
       </td>
-      {/* Em branco de propósito: espaço para escrever à mão na folha impressa. */}
-      <td className="px-2 py-2" />
     </tr>
   );
 }
@@ -168,12 +173,12 @@ export function Passagem() {
       <section className="folha-passagem rounded-lg border border-border bg-card p-4 print:rounded-none print:border-0 print:p-0">
         <header className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b-2 border-foreground pb-2 print:border-black">
           <div>
-            <h2 className="text-lg font-bold uppercase tracking-wide">Passagem de plantão — {setorNome}</h2>
-            <p className="text-xs text-muted-foreground print:text-neutral-700">
+            <h2 className="text-xl font-bold uppercase tracking-wide">Passagem de plantão — {setorNome}</h2>
+            <p className="text-sm text-muted-foreground print:text-neutral-700">
               {atualizado ? `Dados de ${atualizado}` : "—"} · {passagem.data?.pacientes.length ?? 0} pacientes
             </p>
           </div>
-          <div className="grid gap-1 text-xs sm:grid-cols-2 sm:gap-6">
+          <div className="grid gap-1 text-sm sm:grid-cols-2 sm:gap-6">
             <span>Passa: ______________________</span>
             <span>Recebe: ______________________</span>
           </div>
@@ -187,32 +192,30 @@ export function Passagem() {
           </div>
         ) : (
           <div className="overflow-x-auto print:overflow-visible">
-            <table className="w-full min-w-[900px] border-collapse text-sm print:min-w-0 print:text-[10.5px]">
+            <table className="w-full min-w-[900px] border-collapse text-[15px] print:min-w-0 print:text-[12.5px]">
               <colgroup>
                 <col className="w-[5%]" />
-                <col className="w-[10%]" />
-                <col className="w-[22%]" />
-                <col className="w-[14%]" />
-                <col className="w-[16%]" />
-                <col className="w-[17%]" />
-                <col className="w-[16%]" />
+                <col className="w-[11%]" />
+                <col className="w-[27%]" />
+                <col className="w-[19%]" />
+                <col className="w-[19%]" />
+                <col className="w-[19%]" />
               </colgroup>
               <thead>
-                <tr className="border-b-2 border-border bg-secondary text-left text-[11px] uppercase tracking-wide text-muted-foreground print:border-black print:bg-neutral-200 print:text-black">
+                <tr className="border-b-2 border-border bg-secondary text-left text-[0.8em] uppercase tracking-wide text-muted-foreground print:border-black print:bg-neutral-200 print:text-black">
                   <th className="px-2 py-1.5 text-center">Leito</th>
                   <th className="px-2 py-1.5">Paciente</th>
-                  <th className="px-2 py-1.5">Diagnóstico</th>
-                  <th className="px-2 py-1.5">Dispositivos</th>
+                  <th className="px-2 py-1.5">Diagnóstico / Resumo</th>
+                  <th className="px-2 py-1.5">Dispositivos / Curativos</th>
                   <th className="px-2 py-1.5">ATB / Culturas</th>
                   <th className="px-2 py-1.5">Pendências</th>
-                  <th className="px-2 py-1.5">Intercorrências</th>
                 </tr>
               </thead>
               <tbody>
                 {passagem.data?.pacientes.map((p, i) => <Linha key={`${p.leito}-${i}`} p={p} />)}
                 {passagem.data?.pacientes.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
                       Nenhum paciente internado neste setor.
                     </td>
                   </tr>
