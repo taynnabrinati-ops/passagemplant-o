@@ -74,6 +74,33 @@
     });
     quadro.recolhidos = quadro.recolhidos.slice(0, 60);
 
+    // Endereços que ESTA janela chamou (sem as respostas).
+    try {
+      quadro.chamadas = [...new Set(win.performance.getEntriesByType("resource")
+        .filter((r) => r.initiatorType === "xmlhttprequest" || r.initiatorType === "fetch")
+        .map((r) => { const s = so(r.name); return `${s.caminho}${s.parametros.length ? "?" + s.parametros.join("&") : ""}`; }))];
+    } catch { quadro.chamadas = []; }
+
+    // Esqueleto das regiões que interessam (só tags e classes; textos viram tamanho).
+    const ALVOS = /hist[óo]rico de evolu|dispositivo|prescri[çc][ãa]o do dia|cuidados gerais|medica[çc][õo]es|evolu[çc][ãa]o/i;
+    const esqueleto = (el, nivel) => {
+      if (nivel > 7) return "…";
+      const filhos = [...el.children].slice(0, 12).map((c) => esqueleto(c, nivel + 1));
+      const proprio = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.nodeValue.trim()).join(" ");
+      const nome = `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.classList.length ? "." + [...el.classList].join(".") : ""}`;
+      const out = { el: nome };
+      if (proprio) out.texto = ALVOS.test(proprio) && proprio.length < 40 ? proprio : `texto(${proprio.length})`;
+      if (el.children.length) out.filhos = filhos.concat(el.children.length > 12 ? [`+${el.children.length - 12}`] : []);
+      return out;
+    };
+    quadro.regioes = [];
+    doc.querySelectorAll("h1,h2,h3,h4,h5,legend,.panel-title,.box-title,a,span,strong,label").forEach((h) => {
+      const t = h.textContent.trim();
+      if (t.length > 40 || !ALVOS.test(t) || quadro.regioes.length >= 8) return;
+      const caixa = h.closest(".panel, .box, .card, fieldset, section, .tab-pane") || h.parentElement?.parentElement;
+      if (caixa && !quadro.regioes.some((r) => r.titulo === t)) quadro.regioes.push({ titulo: t, esqueleto: esqueleto(caixa, 0) });
+    });
+
     const resultado = [quadro];
     doc.querySelectorAll("iframe, frame").forEach((fr, i) => {
       try {

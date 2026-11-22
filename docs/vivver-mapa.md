@@ -33,6 +33,19 @@ dado de paciente.
   intervalo, data-hora-início, uso contínuo, via, observação).
 - Janela de prescrição: `/amx/prescricao_medicamento`.
 
+## Confirmado pelos mapas (só nomes)
+- Leitos: `GET /inh/painel_internacao/atualizar_leitos.json`. Campos por linha:
+  `leito`, `bloco`, `acomodacao`, `situacao`, `usuario` (paciente),
+  `idade`, `sexo`, `prontuario`, `recepcao_id` (id da internação),
+  `tempo_alocado`, `dia_previsao_alta`, `indisolamento`, `total_evolucoes_nao_lidas`.
+- Prontuário: `/inh/prontuario_eletronico?prontuario_eletronico[hos_inh_recepcao_internacao_id]=<recepcao_id>&workMode=…&oldWorkMode=…`.
+- Prescrição do dia: campos `prontuario_eletronico[item_prescricao[N]][…]`
+  (`data_hora_inicio`, `intervalo_desc`, `obsprincipio`, `codviaadministracao`,
+  `numdiaduracao`…); cuidados em `item_cuidado[N]`.
+- Prescrição de medicamento (`/amx/prescricao_medicamento`) tem
+  `dat_inicio_uso_antibiotico` → dia de antibiótico.
+- Diagnóstico: `desdiagnosticoinicial`, `codcidprincipal`, `codcidsecundario`.
+
 ## Falta
 - **Histórico de evolução** (atalho `shortcut_inh_historico_evolucao`): onde
   ficam as evoluções médica e de enfermagem, "fechadinhas".
